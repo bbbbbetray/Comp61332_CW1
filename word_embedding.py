@@ -43,7 +43,7 @@ class TextDataset(Dataset):
 
 
 # build up my vocabulary
-vocab = build_vocab(train_X=load_dataset.train_X, min_freq=3)
+vocab = build_vocab(train_X=load_dataset.train_X, min_freq=1)
 # print('--------------------------------word embedding------------------------------------')
 # print(vocab)
 
@@ -56,8 +56,8 @@ idx_train_X = [[vocab.get(token) if token in vocab else 0 for token in sent.spli
 # print(idx_train_X[:2])
 
 # the sentence corresponding labels
-labels_train_X = [load_dataset.lab_dict1.get(load_dataset.train_coarse[i]) for i in
-                  range(len(load_dataset.train_coarse))]
+labels_train_X = [load_dataset.lab_dict2.get(load_dataset.train_fine[i]) for i in
+                  range(len(load_dataset.train_fine))]
 # print(labels_train_X[:2])
 
 
@@ -73,7 +73,7 @@ def pad_or_truncate(sequences, max_len, pad_value):
     return torch.LongTensor(padded_sequences)
 
 
-padded_idx_train_X = pad_or_truncate(idx_train_X, 30, vocab_size)
+padded_idx_train_X = pad_or_truncate(idx_train_X, 25, vocab_size)
 
 dataset = TextDataset(padded_idx_train_X, labels_train_X)
 
@@ -82,10 +82,10 @@ train_loader = DataLoader(dataset, batch_size=setting.batch_size, shuffle=True)
 ####### test loader
 idx_test_X = [[vocab.get(token) if token in vocab else 0 for token in sent.split()] for sent in load_dataset.test_X]
 
-padded_idx_test_X = pad_or_truncate(idx_test_X, 30, vocab_size)
+padded_idx_test_X = pad_or_truncate(idx_test_X, 25, vocab_size)
 
-labels_test_X = [load_dataset.lab_dict1.get(load_dataset.test_coarse[i]) for i in
-                 range(len(load_dataset.test_coarse))]
+labels_test_X = [load_dataset.lab_dict2.get(load_dataset.test_fine[i]) for i in
+                 range(len(load_dataset.test_fine))]
 
 # print(labels_test_X)
 
@@ -99,10 +99,10 @@ idx_eval_X = [[vocab.get(token) if token in vocab else 0 for token in sent.split
 
 # print(idx_eval_X[:2])
 
-padded_idx_dev_X = pad_or_truncate(idx_eval_X, 30, vocab_size)
+padded_idx_dev_X = pad_or_truncate(idx_eval_X, 25, vocab_size)
 
-labels_dev_X = [load_dataset.lab_dict1.get(load_dataset.dev_coarse[i]) for i in
-                range(len(load_dataset.dev_coarse))]
+labels_dev_X = [load_dataset.lab_dict2.get(load_dataset.dev_fine[i]) for i in
+                range(len(load_dataset.dev_fine))]
 
 # print("----------------------here---------------------")
 # print(padded_idx_dev_X[:20])

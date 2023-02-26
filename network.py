@@ -20,27 +20,27 @@ class FFNetwork(nn.Module):
         super(FFNetwork, self).__init__()
         if IsGloVe:
             self.embedding = nn.Embedding.from_pretrained(embedding_matrix, freeze=False,
-                                                          padding_idx=word_embedding.vocab_size)
+                                                          padding_idx=len(glove_embedding.glove_embedding)+1)
         else:
             self.embedding = nn.Embedding(vocab_size, embedding_size, padding_idx=word_embedding.vocab_size)
-        self.fc1 = nn.Linear(embedding_size, hidden_size)
-        self.fc2 = nn.Linear(hidden_size, num_classes)
+        self.fc1 = nn.Linear(embedding_size, num_classes)
+        # self.fc2 = nn.Linear(hidden_size, hidden_size)
+
 
     def forward(self, text):
         # text is the shape of [batch_size,sequence length]
         embedded = self.embedding(text)
 
         # mask out padding index
-        mask = (text != self.embedding.padding_idx) & (text != 0)  # especially 0 is unknown word
+        mask = (text != self.embedding.padding_idx) & (text != 0) # especially 0 is unknown word
         # calculate mean average
         sum_embedded = torch.sum(embedded * mask.unsqueeze(-1).float(), dim=1)
         avg_embedded = sum_embedded / mask.sum(dim=1, keepdim=True).float()
 
         # proceed sentence
         x = self.fc1(avg_embedded)
-        x = nn.functional.relu(x)
-        # x = self.dropout(x)
-        x = self.fc2(x)
+        # x = nn.functional.relu(x)
+        # x = self.fc2(x)
         # output using softmax (multiclass classification)
         x = nn.functional.softmax(x, dim=1)
         return x

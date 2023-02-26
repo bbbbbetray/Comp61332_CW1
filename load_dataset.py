@@ -48,7 +48,7 @@ def preprocessing(processing_set, stopwords, lc=False, is_processed=False):  # i
         for elements in line.split():
             if elements in stopwords:
                 continue
-            elif elements in punc:
+            if elements in punc:
                 continue
             else:
                 if lc:
@@ -64,6 +64,7 @@ def preprocessing(processing_set, stopwords, lc=False, is_processed=False):  # i
 # load source file (training and evaluation) and test file
 source = load_dataset(setting.path_train)  # contain training and evaluation set
 test_data = load_dataset(setting.path_test)
+random.shuffle(source)
 
 # split the source file
 # train_test_split: 90% train set, 10% evaluation set
@@ -94,6 +95,9 @@ test_coarse, test_fine = divide_tags(test_Y)
 # match classes to encoded number
 lab_coarse = list(set(train_coarse))
 lab_fine = list(set(train_fine))
+
+# print(lab_coarse)
+# print(lab_fine)
 lab_dict1 = {lab_coarse[i]: i for i in range(len(lab_coarse))}
 lab_dict2 = {lab_fine[i]: i for i in range(len(lab_fine))}
 
@@ -108,6 +112,8 @@ num_fine = len(lab_fine)
 stopword_file = load_stopwards(setting.path_stop)
 
 # preprocessed training set
-train_X = preprocessing(processing_set=train_X, stopwords=stopword_file, lc=True, is_processed=False)
-test_X = preprocessing(processing_set=test_X, stopwords=stopword_file, lc=True, is_processed=False)
-dev_X = preprocessing(processing_set=dev_X, stopwords=stopword_file, lc=True, is_processed=False)
+train_X = preprocessing(processing_set=train_X, stopwords=stopword_file, lc=True, is_processed=True)
+test_X = preprocessing(processing_set=test_X, stopwords=stopword_file, lc=True, is_processed=True)
+dev_X = preprocessing(processing_set=dev_X, stopwords=stopword_file, lc=True, is_processed=True)
+
+

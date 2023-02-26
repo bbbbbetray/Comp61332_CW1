@@ -44,28 +44,48 @@ padded_vec = padded_vec * 2 - 1
 # Add unk tensor inside the dictionary
 glove_embeddings = {unk_token: unk_vec, **glove_embedding}
 
-embedding_matrix = torch.stack(list(glove_embeddings.values()))
+# unk vector is at the begining of the embedding matrix
+embedding_matrix1 = torch.stack(list(glove_embeddings.values()))
 
-embedding_matrix = torch.cat((embedding_matrix, padded_vec.unsqueeze(0)), dim=0)
+# add padding vectors to the end of embedding matrix
+embedding_matrix2 = torch.cat((embedding_matrix1, padded_vec.unsqueeze(0)), dim=0)
 
-
+# --------------------training set
 
 # convert each sentence into every token index in the vocabulary, those not appear using "#unk"(index 0) instead
-idx_X = [[list(glove_embeddings).index(token) if token in glove_embeddings else 0 for token in sent.split()] for sent in
-         load_dataset.train_X]
+train_idx_X = [[list(glove_embeddings).index(token) if token in glove_embeddings else 0 for token in sent.split()] for
+               sent in
+               load_dataset.train_X]
 
-# Pad index and convert word embedding into tensor
-padded_sentences_tensor = nn.utils.rnn.pad_sequence([torch.tensor(indexed_sentence) for indexed_sentence in idx_X],
-                                                    batch_first=True, padding_value=len(glove_embeddings))
+# Pad or truncate index and convert word embedding into tensor
+train_padded_idx_X = word_embedding.pad_or_truncate(train_idx_X, 30, len(glove_embeddings))
 
 labels_train_X = [load_dataset.lab_dict1.get(load_dataset.train_coarse[i]) for i in
                   range(len(load_dataset.train_coarse))]
 
-dataset = word_embedding.TextDataset(padded_sentences_tensor, labels_train_X)
+dataset_train = word_embedding.TextDataset(train_padded_idx_X, labels_train_X)
 
-train_loader = DataLoader(dataset, batch_size=setting.batch_size, shuffle=True)
+train_loader = DataLoader(dataset_train, batch_size=setting.batch_size, shuffle=True)
 
-# sent = [sent for sent, _ in train_loader]
-# lab = [lab for _, lab in train_loader]
-# print(sent[0])
-# print(lab[0])
+# ------------------------dev set
+
+# convert each sentence into every token index in the vocabulary, those not appear using "#unk"(index 0) instead
+dev_idx_X = [[list(glove_embeddings).index(token) if token in glove_embeddings else 0 for token in sent.split()] for
+             sent in
+             load_dataset.dev_X]
+
+# Pad or truncate index and convert word embedding into tensor
+dev_padded_idx_X = word_embedding.pad_or_truncate(dev_idx_X, 30, len(glove_embeddings))
+
+labels_dev_X = [load_dataset.lab_dict1.get(load_dataset.dev_coarse[i]) for i in
+                range(len(load_dataset.dev_coarse))]
+
+# print(dev_padded_idx_X[:5])
+# print(labels_dev_X[:5])
+
+
+dataset_dev = word_embedding.TextDataset(dev_padded_idx_X, labels_dev_X)
+
+dev_loader = DataLoader(dataset_dev, batch_size=setting.batch_size, shuffle=True)
+
+

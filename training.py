@@ -10,8 +10,8 @@ import torch
 import random
 
 model = network.FFNetwork(vocab_size=word_embedding.vocab_size + 1, embedding_size=setting.embedding_dim,
-                          hidden_size=setting.hidden_size, num_classes=load_dataset.num_coarse,IsGloVe=True,
-                          embedding_matrix=glove_embedding.embedding_matrix)
+                          hidden_size=setting.hidden_size, num_classes=load_dataset.num_fine, IsGloVe=False,
+                          embedding_matrix=glove_embedding.embedding_matrix2)
 
 torch.manual_seed(1)
 random.seed(1)
@@ -54,6 +54,7 @@ for epoch in range(setting.num_epochs):
             print('[%d, %5d] loss: %.3f' %
                   (epoch + 1, i + 1, running_loss / 10))
             running_loss = 0.0
+
     # compute the accuracy on the training data
     accuracy = correct / len(word_embedding.train_loader.dataset)
     # print epoch statistics
@@ -63,26 +64,6 @@ for epoch in range(setting.num_epochs):
 # Set the model to evaluation mode
 model.eval()
 
-# Initialize variables to store the accuracy
-eval_correct = 0
-
-# Loop over the evaluation dataset
-with torch.no_grad():  # Disable gradient tracking
-    for inputs, labels in word_embedding.dev_loader:
-        # Forward pass
-        outputs = model(inputs)
-        # Compute the number of correct predictions
-        predicted_labels = torch.argmax(outputs, dim=1)
-        eval_correct += (predicted_labels == labels).sum().item()
-
-# Compute the average loss and accuracy
-eval_accuracy = eval_correct / len(word_embedding.dataset_dev)
-#
-# Print the evaluation metrics
-print('Evaluation Accuracy: {:.2f}%'
-      .format(eval_accuracy * 100))
-#
-
 from sklearn.metrics import accuracy_score, precision_recall_fscore_support
 
 # Create empty lists to store the true labels and predicted labels
@@ -91,7 +72,7 @@ pred_labels = []
 
 # Iterate over the test data and make predictions
 with torch.no_grad():
-    for inputs, labels in word_embedding.test_loader:
+    for inputs, labels in word_embedding.dev_loader:
         # Forward pass
         outputs = model(inputs)
         # Compute predicted labels
@@ -106,7 +87,36 @@ precision, recall, f1_score, _ = precision_recall_fscore_support(true_labels, pr
                                                                  zero_division=True)
 
 # Print the evaluation metrics
-print('Test Accuracy: {:.2f}%'.format(accuracy * 100))
-print('Test Precision: {:.2f}%'.format(precision * 100))
-print('Test Recall: {:.2f}%'.format(recall * 100))
-print('Test F1 Score: {:.2f}%'.format(f1_score * 100))
+print('Dev Accuracy: {:.2f}%'.format(accuracy * 100))
+print('Dev Precision: {:.2f}%'.format(precision * 100))
+print('Dev Recall: {:.2f}%'.format(recall * 100))
+print('Dev F1 Score: {:.2f}%'.format(f1_score * 100))
+#
+
+# from sklearn.metrics import accuracy_score, precision_recall_fscore_support
+#
+# # Create empty lists to store the true labels and predicted labels
+# true_labels = []
+# pred_labels = []
+#
+# # Iterate over the test data and make predictions
+# with torch.no_grad():
+#     for inputs, labels in word_embedding.test_loader:
+#         # Forward pass
+#         outputs = model(inputs)
+#         # Compute predicted labels
+#         predicted_labels = torch.argmax(outputs, dim=1)
+#         # Append true and predicted labels to the lists
+#         true_labels.extend(labels.numpy())
+#         pred_labels.extend(predicted_labels.numpy())
+#
+# # Calculate accuracy and other metrics using sklearn
+# accuracy = accuracy_score(true_labels, pred_labels)
+# precision, recall, f1_score, _ = precision_recall_fscore_support(true_labels, pred_labels, average='weighted',
+#                                                                  zero_division=True)
+#
+# # Print the evaluation metrics
+# print('Test Accuracy: {:.2f}%'.format(accuracy * 100))
+# print('Test Precision: {:.2f}%'.format(precision * 100))
+# print('Test Recall: {:.2f}%'.format(recall * 100))
+# print('Test F1 Score: {:.2f}%'.format(f1_score * 100))
