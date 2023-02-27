@@ -1,12 +1,17 @@
 import torch
-import word_embedding
 import load_dataset
 import setting
-from torch import nn
 from torch.utils.data import DataLoader, Dataset
+import utils
 
+# GloVe does need preprocessed data
+train_X = load_dataset.preprocessing(processing_set=load_dataset.train_X,
+                                     stopword_path=setting.path_stop, lc=True, is_processed=False)
+test_X = load_dataset.preprocessing(processing_set=load_dataset.test_X,
+                                    stopword_path=setting.path_stop, lc=True, is_processed=False)
+dev_X = load_dataset.preprocessing(processing_set=load_dataset.dev_X,
+                                   stopword_path=setting.path_stop, lc=True, is_processed=False)
 
-### unknown word may mislead dictionary
 def load_glove(path, my_vocab):
     # load GloVe, path need to be altered when have configuration file
     # only loads those words in the vocabulary pruning
@@ -22,7 +27,7 @@ def load_glove(path, my_vocab):
     return glove_embeddings
 
 
-glove_vocab = word_embedding.build_vocab(load_dataset.train_X, 1)
+glove_vocab = utils.build_vocab(train_X, 1)
 
 glove_embedding = load_glove(setting.path_glove, glove_vocab)
 
@@ -44,48 +49,25 @@ padded_vec = padded_vec * 2 - 1
 # Add unk tensor inside the dictionary
 glove_embeddings = {unk_token: unk_vec, **glove_embedding}
 
-# unk vector is at the begining of the embedding matrix
-embedding_matrix1 = torch.stack(list(glove_embeddings.values()))
+# unk vector is at the beginning of the embedding matrix
+embedding_matrix = torch.stack(list(glove_embeddings.values()))
 
-# add padding vectors to the end of embedding matrix
-embedding_matrix2 = torch.cat((embedding_matrix1, padded_vec.unsqueeze(0)), dim=0)
-
-# --------------------training set
-
-# convert each sentence into every token index in the vocabulary, those not appear using "#unk"(index 0) instead
-train_idx_X = [[list(glove_embeddings).index(token) if token in glove_embeddings else 0 for token in sent.split()] for
-               sent in
-               load_dataset.train_X]
-
-# Pad or truncate index and convert word embedding into tensor
-train_padded_idx_X = word_embedding.pad_or_truncate(train_idx_X, 30, len(glove_embeddings))
-
-labels_train_X = [load_dataset.lab_dict1.get(load_dataset.train_coarse[i]) for i in
-                  range(len(load_dataset.train_coarse))]
-
-dataset_train = word_embedding.TextDataset(train_padded_idx_X, labels_train_X)
-
-train_loader = DataLoader(dataset_train, batch_size=setting.batch_size, shuffle=True)
-
-# ------------------------dev set
-
-# convert each sentence into every token index in the vocabulary, those not appear using "#unk"(index 0) instead
-dev_idx_X = [[list(glove_embeddings).index(token) if token in glove_embeddings else 0 for token in sent.split()] for
-             sent in
-             load_dataset.dev_X]
-
-# Pad or truncate index and convert word embedding into tensor
-dev_padded_idx_X = word_embedding.pad_or_truncate(dev_idx_X, 30, len(glove_embeddings))
-
-labels_dev_X = [load_dataset.lab_dict1.get(load_dataset.dev_coarse[i]) for i in
-                range(len(load_dataset.dev_coarse))]
-
-# print(dev_padded_idx_X[:5])
-# print(labels_dev_X[:5])
+# add padding vector to the end of embedding matrix
+embedding_matrix = torch.cat((embedding_matrix, padded_vec.unsqueeze(0)), dim=0)
 
 
-dataset_dev = word_embedding.TextDataset(dev_padded_idx_X, labels_dev_X)
+# convert data and tag set into dataloader
+def to_dataloader(dataset, padding_criteria, TagSet):
+    idx = [[list(glove_embeddings).index(token) if token in glove_embeddings else 0 for token in sent.split()]
+           for sent in dataset]
+    # Pad or truncate index and convert word embedding into tensor
+    padded_idx = utils.pad_or_truncate(idx, padding_criteria, len(glove_embeddings))
+    dataset = utils.TextDataset(padded_idx, TagSet)
+    data_loader = DataLoader(dataset, batch_size=setting.batch_size, shuffle=True)
+    return data_loader
 
-dev_loader = DataLoader(dataset_dev, batch_size=setting.batch_size, shuffle=True)
 
+train_loader = to_dataloader(train_X, 25, load_dataset.coarse_train)
+dev_loader = to_dataloader(dev_X, 25, load_dataset.coarse_dev)
+test_loader = to_dataloader(test_X, 25, load_dataset.coarse_test)
 

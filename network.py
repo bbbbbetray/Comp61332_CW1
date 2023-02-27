@@ -1,17 +1,7 @@
-# import dependencies and libries
-import setting
-import load_dataset
-import numpy as np
-import torch, random
+import torch
 from torch import nn
-from torch.utils.data import DataLoader, Dataset
-import torch.optim as optim
 import glove_embedding
-
 import word_embedding
-
-torch.manual_seed(1)
-random.seed(1)
 
 
 # define a feed-forward network

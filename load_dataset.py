@@ -14,7 +14,7 @@ def load_dataset(path):
         return source
 
 
-# divied each sentence into tags and context
+# divide each sentence into tags and context
 # for every sentence, the content before the first space is combined tag, after is context
 def fetch_tags_context(dataset):
     tags = [line.split(' ', 1)[0] for line in dataset]
@@ -30,17 +30,26 @@ def divide_tags(tag_set):
     return coarse, fine
 
 
-def load_stopwards(path):
-    with open(path, 'r') as reader1:
+# def load_stopwards(path):
+#     with open(path, 'r') as reader1:
+#         stopwords = reader1.readlines()
+#         stopwords = [i.replace('\n', '') for i in stopwords]
+#         reader1.close()
+#         return stopwords
+
+def preprocessing(processing_set, stopword_path, lc=False,
+                  is_processed=False):  # input is the set need to be preprocessed
+    if not is_processed:
+        return processing_set
+    # load stop words
+    stopwords = []
+    with open(stopword_path, 'r') as reader1:
         stopwords = reader1.readlines()
         stopwords = [i.replace('\n', '') for i in stopwords]
         reader1.close()
-        return stopwords
 
-
-def preprocessing(processing_set, stopwords, lc=False, is_processed=False):  # input is the set need to be preprocessed
-    if not is_processed:
-        return processing_set
+    # text clean
+    # remove punctuations, stopwords and case lower
     punc = '''!''()-[]``{}`;:'"\,<>./?@#$%^&*_~'''
     results = []
     for line in processing_set:
@@ -60,11 +69,18 @@ def preprocessing(processing_set, stopwords, lc=False, is_processed=False):  # i
     processing_set = results
     return processing_set
 
+# convert the tag set into it's corresponding index set
+def tags_to_index(coarse, fine):
+    coarse_Y = [lab_dict1.get(coarse[i]) for i in
+                range(len(coarse))]
+    fine_Y = [lab_dict2.get(fine[i]) for i in
+              range(len(fine))]
+    return coarse_Y, fine_Y
 
 # load source file (training and evaluation) and test file
 source = load_dataset(setting.path_train)  # contain training and evaluation set
 test_data = load_dataset(setting.path_test)
-random.shuffle(source)
+random.shuffle(source)  # shuffle dataset
 
 # split the source file
 # train_test_split: 90% train set, 10% evaluation set
@@ -84,7 +100,7 @@ test_X, test_Y = fetch_tags_context(test_data)
 
 # divide tags into coarse and fine tags
 # until below each element in train_X correspond to two tags
-# each of them is from: train_coarse and train_fine
+# train_coarse and train_fine
 train_coarse, train_fine = divide_tags(train_Y)
 dev_coarse, dev_fine = divide_tags(dev_Y)
 test_coarse, test_fine = divide_tags(test_Y)
@@ -101,6 +117,16 @@ lab_fine = list(set(train_fine))
 lab_dict1 = {lab_coarse[i]: i for i in range(len(lab_coarse))}
 lab_dict2 = {lab_fine[i]: i for i in range(len(lab_fine))}
 
+
+# convert the tag set into it's corresponding index set
+# convert training tags
+coarse_train, fine_train = tags_to_index(train_coarse, train_fine)
+
+# convert dev tags
+coarse_dev, fine_dev = tags_to_index(dev_coarse, dev_fine)
+
+# convert test tags
+coarse_test, fine_test = tags_to_index(test_coarse, test_fine)
 # print(lab_dict1)
 # print(lab_dict2)
 
@@ -108,12 +134,9 @@ lab_dict2 = {lab_fine[i]: i for i in range(len(lab_fine))}
 num_coarse = len(lab_coarse)
 num_fine = len(lab_fine)
 
-# load stopwords
-stopword_file = load_stopwards(setting.path_stop)
-
 # preprocessed training set
-train_X = preprocessing(processing_set=train_X, stopwords=stopword_file, lc=True, is_processed=True)
-test_X = preprocessing(processing_set=test_X, stopwords=stopword_file, lc=True, is_processed=True)
-dev_X = preprocessing(processing_set=dev_X, stopwords=stopword_file, lc=True, is_processed=True)
+# train_X = preprocessing(processing_set=train_X, stopword_path=setting.path_stop, lc=True, is_processed=True)
+# test_X = preprocessing(processing_set=test_X, stopword_path=setting.path_stop, lc=True, is_processed=True)
+# dev_X = preprocessing(processing_set=dev_X, stopword_path=setting.path_stop, lc=True, is_processed=True)
 
-
+# print(coarse_dev)

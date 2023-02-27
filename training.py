@@ -1,5 +1,3 @@
-import torch.optim as optim
-
 import glove_embedding
 import network
 import word_embedding
@@ -7,22 +5,19 @@ import load_dataset
 import setting
 from torch import nn, optim
 import torch
-import random
+
+
 
 model = network.FFNetwork(vocab_size=word_embedding.vocab_size + 1, embedding_size=setting.embedding_dim,
                           hidden_size=setting.hidden_size, num_classes=load_dataset.num_fine, IsGloVe=False,
-                          embedding_matrix=glove_embedding.embedding_matrix2)
+                          embedding_matrix=glove_embedding.embedding_matrix)
 
 torch.manual_seed(1)
-random.seed(1)
-# print("---------------------------------------training-----------------------------------------")
-# print(word_embedding.vocab_size+1)
-# print(setting.embedding_dim)
-# print(setting.hidden_size)
-# print(load_dataset.num_coarse)
+# random.seed(1)
 
 # model = network.BiLSTM(vocab_size=word_embedding.vocab_size + 1, embedding_size=setting.embedding_dim,
 #                        hidden_size=setting.hidden_size, num_classes=load_dataset.num_coarse, num_layers=2, dropout=0.5)
+
 # Define optimizer and loss
 optimizer = optim.Adam(model.parameters(), lr=setting.learning_rate)
 criterion = nn.CrossEntropyLoss()
@@ -38,8 +33,7 @@ for epoch in range(setting.num_epochs):
         # forward pass
         outputs = model(inputs)
 
-        # print(outputs)
-        # print(labels)
+        # compute loss and backpropagation
         loss = criterion(outputs, labels)
         loss.backward()
         optimizer.step()
